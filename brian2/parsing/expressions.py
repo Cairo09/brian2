@@ -18,6 +18,13 @@ from brian2.units.fundamentalunits import (
 __all__ = ["parse_expression_dimensions"]
 
 
+def _parse_ast_expression(expr, context):
+    try:
+        return ast.parse(expr, mode="eval")
+    except SyntaxError as ex:
+        raise SyntaxError(f"Error parsing {context} '{expr}': {ex.msg}") from ex
+
+
 def is_boolean_expression(expr, variables):
     """
     Determines if an expression is of boolean type or not
@@ -61,7 +68,7 @@ def is_boolean_expression(expr, variables):
 
     # If we are working on a string, convert to the top level node
     if isinstance(expr, str):
-        mod = ast.parse(expr, mode="eval")
+        mod = _parse_ast_expression(expr, "boolean expression")
         expr = mod.body
 
     if expr.__class__ is ast.BoolOp:
@@ -123,7 +130,7 @@ def _get_value_from_expression(expr, variables):
     """
     # If we are working on a string, convert to the top level node
     if isinstance(expr, str):
-        mod = ast.parse(expr, mode="eval")
+        mod = _parse_ast_expression(expr, "scalar expression")
         expr = mod.body
 
     if expr.__class__ is ast.Name:
@@ -210,7 +217,7 @@ def parse_expression_dimensions(expr, variables, orig_expr=None):
     # If we are working on a string, convert to the top level node
     if isinstance(expr, str):
         orig_expr = expr
-        mod = ast.parse(expr, mode="eval")
+        mod = _parse_ast_expression(expr, "expression")
         expr = mod.body
     if expr.__class__ is ast.Name:
         name = expr.id

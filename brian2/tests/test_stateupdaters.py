@@ -49,8 +49,9 @@ def test_explicit_stateupdater_parsing():
 
     # Examples of failed parsing
     # No x_new = ... statement
-    with pytest.raises(SyntaxError):
+    with pytest.raises(SyntaxError) as exc:
         ExplicitStateUpdater("x = x + dt * f(x, t)")
+    assert "Parsing failed:" in str(exc.value)
     # Not an assigment
     with pytest.raises(SyntaxError):
         ExplicitStateUpdater(

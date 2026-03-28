@@ -55,7 +55,12 @@ class NodeRenderer:
     def render_expr(self, expr, strip=True):
         if strip:
             expr = expr.strip()
-        node = ast.parse(expr, mode="eval")
+        try:
+            node = ast.parse(expr, mode="eval")
+        except SyntaxError as ex:
+            raise SyntaxError(
+                f"Error parsing expression '{expr}': {ex.msg}"
+            ) from ex
         return self.render_node(node.body)
 
     def render_node(self, node):

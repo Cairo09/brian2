@@ -389,11 +389,22 @@ class BrianObjectException(Exception):
         )
 
     def __str__(self):
+        cause = self.__cause__
+        while getattr(cause, "__cause__", None) is not None:
+            cause = cause.__cause__
+
+        if cause is None:
+            original_error = "(See above for original error message and traceback.)"
+        else:
+            original_error = (
+                "Original error: "
+                f"{cause.__class__.__name__}: {cause}"
+            )
         return (
             f"Error encountered with object named '{self._brian_objname}'.\n"
             f"{self._brian_objcreate}\n\n"
-            f"{self._brian_message} "
-            "(See above for original error message and traceback.)"
+            f"{self._brian_message}\n"
+            f"{original_error}"
         )
 
 

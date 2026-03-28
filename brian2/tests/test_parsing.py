@@ -592,6 +592,7 @@ def test_shadowed_internal_variable_function_call_error():
     msg = str(original_error)
     assert "variable" in msg
     assert "used like a function" in msg
+    assert "Original error: SyntaxError:" in str(excinfo.value)
 
 
 @pytest.mark.codegen_independent

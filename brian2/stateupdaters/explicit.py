@@ -260,7 +260,7 @@ class ExplicitStateUpdater(StateUpdateMethod):
                 description, parse_all=True
             )
         except ParseException as p_exc:
-            ex = SyntaxError("Parsing failed.")
+            ex = SyntaxError(f"Parsing failed: {p_exc}")
             ex.text = str(p_exc.line)
             ex.offset = p_exc.column
             ex.lineno = p_exc.lineno

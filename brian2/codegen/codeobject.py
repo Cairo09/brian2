@@ -434,7 +434,7 @@ def create_runner_codeobj(
                 check_units_statements(c, variables)
             except (SyntaxError, ValueError) as ex:
                 error_msg = _error_msg(c, name)
-                raise ValueError(error_msg) from ex
+                raise ValueError(f"{error_msg}\nOriginal error: {ex}") from ex
 
     all_variable_indices = copy.copy(group.variables.indices)
     if additional_variables is not None:

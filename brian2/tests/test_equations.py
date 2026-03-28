@@ -396,6 +396,16 @@ def test_construction_errors():
 
 
 @pytest.mark.codegen_independent
+def test_unit_parsing_error_includes_underlying_message():
+    with pytest.raises(EquationError) as exc:
+        Equations("dT/dt = -T / tau : celsius")
+
+    message = str(exc.value)
+    assert "Error parsing the unit specification for variable 'T':" in message
+    assert "Unit specification refers to 'celsius'" in message
+
+
+@pytest.mark.codegen_independent
 def test_unit_checking():
     # dummy Variable class
     class S:

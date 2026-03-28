@@ -405,7 +405,8 @@ def parse_string_equations(eqns):
             dims, var_type = dimensions_and_type_from_string(eq_content["unit"])
         except ValueError as ex:
             raise EquationError(
-                f"Error parsing the unit specification for variable '{identifier}'."
+                "Error parsing the unit specification for variable "
+                f"'{identifier}': {ex}"
             ) from ex
 
         expression = eq_content.get("expression")
