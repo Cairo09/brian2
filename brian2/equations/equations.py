@@ -11,7 +11,6 @@ from collections.abc import Hashable, Mapping
 import sympy
 from pyparsing import (
     CharsNotIn,
-    Combine,
     Group,
     LineEnd,
     OneOrMore,
@@ -35,7 +34,7 @@ from brian2.units.fundamentalunits import (
     get_unit,
     get_unit_for_display,
 )
-from brian2.utils.caching import CacheKey, cached
+from brian2.utils.caching import CacheKey, _hashable, cached
 from brian2.utils.logger import get_logger
 from brian2.utils.stringtools import get_identifiers
 from brian2.utils.topsort import topsort
@@ -78,12 +77,13 @@ IDENTIFIER = Word(
 
 # very broad definition here, expression will be analysed by sympy anyway
 # allows for multi-line expressions, where each line can have comments
-EXPRESSION = Combine(
-    OneOrMore(
-        (CharsNotIn(":#\n") + Suppress(Optional(LineEnd()))).ignore("#" + restOfLine)
-    ),
-    joinString=" ",
-).set_results_name("expression")
+FRAGMENT = Group(
+    CharsNotIn(":#\n").set_results_name("text")
+    + Optional(Suppress("#") + restOfLine).set_results_name("comment")
+)
+EXPRESSION = OneOrMore(
+    FRAGMENT + Suppress(Optional(LineEnd()))
+).set_results_name("fragments")
 
 # a unit
 # very broad definition here, again. Whether this corresponds to a valid unit
@@ -97,6 +97,7 @@ FLAG = Word(string.ascii_letters, string.ascii_letters + "_- " + string.digits)
 FLAGS = (
     Suppress("(") + FLAG + ZeroOrMore(Suppress(",") + FLAG) + Suppress(")")
 ).set_results_name("flags")
+DESCRIPTION = (Suppress("#") + restOfLine).set_results_name("description")
 
 ###############################################################################
 # Equations
@@ -105,25 +106,36 @@ FLAGS = (
 # Parameter:
 # x : volt (flags)
 PARAMETER_EQ = Group(
-    IDENTIFIER + Suppress(":") + UNIT + Optional(FLAGS)
+    IDENTIFIER + Suppress(":") + UNIT + Optional(FLAGS) + Optional(DESCRIPTION)
 ).set_results_name(PARAMETER)
 
 # Static equation:
 # x = 2 * y : volt (flags)
 STATIC_EQ = Group(
-    IDENTIFIER + Suppress("=") + EXPRESSION + Suppress(":") + UNIT + Optional(FLAGS)
+    IDENTIFIER
+    + Suppress("=")
+    + EXPRESSION
+    + Suppress(":")
+    + UNIT
+    + Optional(FLAGS)
+    + Optional(DESCRIPTION)
 ).set_results_name(SUBEXPRESSION)
 
 # Differential equation
 # dx/dt = -x / tau : volt
 DIFF_OP = Suppress("d") + IDENTIFIER + Suppress("/") + Suppress("dt")
 DIFF_EQ = Group(
-    DIFF_OP + Suppress("=") + EXPRESSION + Suppress(":") + UNIT + Optional(FLAGS)
+    DIFF_OP
+    + Suppress("=")
+    + EXPRESSION
+    + Suppress(":")
+    + UNIT
+    + Optional(FLAGS)
+    + Optional(DESCRIPTION)
 ).set_results_name(DIFFERENTIAL_EQUATION)
 
-# ignore comments
-EQUATION = (PARAMETER_EQ | STATIC_EQ | DIFF_EQ).ignore("#" + restOfLine)
-EQUATIONS = ZeroOrMore(EQUATION)
+EQUATION = PARAMETER_EQ | STATIC_EQ | DIFF_EQ
+EQUATIONS = ZeroOrMore(EQUATION | Suppress("#" + restOfLine) | Suppress(LineEnd()))
 
 
 class EquationError(Exception):
@@ -408,16 +420,40 @@ def parse_string_equations(eqns):
                 f"Error parsing the unit specification for variable '{identifier}'."
             ) from ex
 
-        expression = eq_content.get("expression")
-        if expression is not None:
+        expression = None
+        inline_comments = []
+        fragments = eq_content.get("fragments")
+        if fragments is not None:
+            expression_chunks = []
+            comments = []
+            for fragment in fragments:
+                text = fragment.get("text", "")
+                expression_chunks.append(text)
+                comment = fragment.get("comment", "").strip()
+                if comment:
+                    comments.append({"text": text.strip(), "comment": comment})
+
             # Replace multiple whitespaces (arising from joining multiline
             # strings) with single space
             p = re.compile(r"\s{2,}")
-            expression = Expression(p.sub(" ", expression))
+            clean_expression = p.sub(" ", " ".join(expression_chunks)).strip()
+            expression = Expression(clean_expression)
+            inline_comments = comments
+
+        description = eq_content.get("description")
+        if isinstance(description, str):
+            description = description.strip()
         flags = list(eq_content.get("flags", []))
 
         equation = SingleEquation(
-            eq_type, identifier, dims, var_type=var_type, expr=expression, flags=flags
+            eq_type,
+            identifier,
+            dims,
+            var_type=var_type,
+            expr=expression,
+            flags=flags,
+            description=description,
+            inline_comments=inline_comments,
         )
 
         if identifier in equations:
@@ -457,7 +493,15 @@ class SingleEquation(Hashable, CacheKey):
     _cache_irrelevant_attributes = {"update_order"}
 
     def __init__(
-        self, type, varname, dimensions, var_type=FLOAT, expr=None, flags=None
+        self,
+        type,
+        varname,
+        dimensions,
+        var_type=FLOAT,
+        expr=None,
+        flags=None,
+        description=None,
+        inline_comments=None,
     ):
         self.type = type
         self.varname = varname
@@ -479,6 +523,11 @@ class SingleEquation(Hashable, CacheKey):
             self.flags = []
         else:
             self.flags = list(flags)
+        self.description = description
+        if inline_comments is None:
+            self.inline_comments = []
+        else:
+            self.inline_comments = list(inline_comments)
 
         # will be set later in the sort_subexpressions method of Equations
         self.update_order = -1
@@ -508,7 +557,7 @@ class SingleEquation(Hashable, CacheKey):
         return not self == other
 
     def __hash__(self):
-        return hash(self._state_tuple)
+        return hash(_hashable(self._state_tuple))
 
     def _latex(self, *args):
         if self.type == DIFFERENTIAL_EQUATION:

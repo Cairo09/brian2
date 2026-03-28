@@ -826,6 +826,8 @@ class NeuronGroup(Group, SpikeSource):
                         dtype=dtype,
                         constant=constant,
                         scalar=shared,
+                        description=eq.description,
+                        inline_comments=eq.inline_comments,
                     )
             elif eq.type == SUBEXPRESSION:
                 self.variables.add_subexpression(
@@ -834,6 +836,8 @@ class NeuronGroup(Group, SpikeSource):
                     expr=str(eq.expr),
                     dtype=dtype,
                     scalar="shared" in eq.flags,
+                    description=eq.description,
+                    inline_comments=eq.inline_comments,
                 )
             else:
                 raise AssertionError(f"Unknown type of equation: {eq.eq_type}")
