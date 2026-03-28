@@ -427,9 +427,9 @@ def parse_string_equations(eqns):
             expression_chunks = []
             comments = []
             for fragment in fragments:
-                text = fragment.get("text", "")
+                text = fragment["text"] if "text" in fragment else ""
                 expression_chunks.append(text)
-                comment = fragment.get("comment", "").strip()
+                comment = (fragment["comment"] if "comment" in fragment else "").strip()
                 if comment:
                     comments.append({"text": text.strip(), "comment": comment})
 
