@@ -16,6 +16,7 @@ from pyparsing import (
     OneOrMore,
     Optional,
     ParseException,
+    ParseResults,
     Suppress,
     Word,
     ZeroOrMore,
@@ -395,6 +396,15 @@ def parse_string_equations(eqns):
     """
     equations = {}
 
+    def _as_text(value):
+        if isinstance(value, ParseResults):
+            if len(value) == 0:
+                return ""
+            return _as_text(value[0])
+        if value is None:
+            return ""
+        return str(value)
+
     try:
         parsed = EQUATIONS.parse_string(eqns, parse_all=True)
     except ParseException as p_exc:
@@ -427,9 +437,9 @@ def parse_string_equations(eqns):
             expression_chunks = []
             comments = []
             for fragment in fragments:
-                text = fragment["text"] if "text" in fragment else ""
+                text = _as_text(fragment["text"]) if "text" in fragment else ""
                 expression_chunks.append(text)
-                comment = (fragment["comment"] if "comment" in fragment else "").strip()
+                comment = _as_text(fragment["comment"] if "comment" in fragment else "").strip()
                 if comment:
                     comments.append({"text": text.strip(), "comment": comment})
 
@@ -440,9 +450,7 @@ def parse_string_equations(eqns):
             expression = Expression(clean_expression)
             inline_comments = comments
 
-        description = eq_content.get("description")
-        if isinstance(description, str):
-            description = description.strip()
+        description = _as_text(eq_content.get("description")).strip() or None
         flags = list(eq_content.get("flags", []))
 
         equation = SingleEquation(
