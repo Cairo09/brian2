@@ -187,10 +187,10 @@ class Variable(CacheKey):
         #: Whether the variable is an array
         self.array = array
 
-        #: A variable-level textual description (typically parsed from equation comments)
+        #: A variable associated description 
         self.description = description
 
-        #: Structured inline comments, e.g. term-level comments in an expression
+        #: inline comments associated with this variable 
         self.inline_comments = (
             [dict(comment) for comment in inline_comments]
             if inline_comments is not None

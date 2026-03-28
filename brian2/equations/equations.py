@@ -441,7 +441,8 @@ def parse_string_equations(eqns):
                 expression_chunks.append(text)
                 comment = _as_text(fragment["comment"] if "comment" in fragment else "").strip()
                 if comment:
-                    comments.append({"text": text.strip(), "comment": comment})
+                    text_for_comment = text.strip().lstrip('(').rstrip(')')
+                    comments.append({"text": text_for_comment, "comment": comment})
 
             # Replace multiple whitespaces (arising from joining multiline
             # strings) with single space
