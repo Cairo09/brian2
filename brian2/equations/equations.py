@@ -113,26 +113,14 @@ PARAMETER_EQ = Group(
 # Static equation:
 # x = 2 * y : volt (flags)
 STATIC_EQ = Group(
-    IDENTIFIER
-    + Suppress("=")
-    + EXPRESSION
-    + Suppress(":")
-    + UNIT
-    + Optional(FLAGS)
-    + Optional(DESCRIPTION)
+    IDENTIFIER + Suppress("=") + EXPRESSION + Suppress(":") + UNIT + Optional(FLAGS) + Optional(DESCRIPTION)
 ).set_results_name(SUBEXPRESSION)
 
 # Differential equation
 # dx/dt = -x / tau : volt
 DIFF_OP = Suppress("d") + IDENTIFIER + Suppress("/") + Suppress("dt")
 DIFF_EQ = Group(
-    DIFF_OP
-    + Suppress("=")
-    + EXPRESSION
-    + Suppress(":")
-    + UNIT
-    + Optional(FLAGS)
-    + Optional(DESCRIPTION)
+    DIFF_OP + Suppress("=") + EXPRESSION + Suppress(":") + UNIT + Optional(FLAGS) + Optional(DESCRIPTION)
 ).set_results_name(DIFFERENTIAL_EQUATION)
 
 EQUATION = PARAMETER_EQ | STATIC_EQ | DIFF_EQ
