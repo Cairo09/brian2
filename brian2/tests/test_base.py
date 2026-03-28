@@ -4,6 +4,7 @@ from packaging.version import parse as parse_version
 
 from brian2 import *
 from brian2.devices.device import reinit_and_delete
+from brian2.equations.equations import EquationError
 from brian2.tests.utils import assert_allclose
 
 
@@ -109,6 +110,24 @@ def test_version():
     assert version_tuple == tuple(expected) or version_tuple == tuple(
         t for t in expected if isinstance(t, int)
     )
+
+
+@pytest.mark.codegen_independent
+def test_brian_object_exception_reports_root_cause_for_three_layers():
+    brian_object = BrianObject(name="three_layer_test")
+    low_level_error = ValueError("deep unit parsing problem")
+
+    try:
+        raise EquationError("high-level equation parsing context") from low_level_error
+    except EquationError as equation_error:
+        with pytest.raises(BrianObjectException) as exc:
+            raise BrianObjectException("top-level runtime context", brian_object) from (
+                equation_error
+            )
+
+    message = str(exc.value)
+    assert "top-level runtime context" in message
+    assert "Original error: ValueError: deep unit parsing problem" in message
 
 
 if __name__ == "__main__":
