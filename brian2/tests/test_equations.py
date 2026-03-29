@@ -210,7 +210,6 @@ def test_parse_equations():
 
 @pytest.mark.codegen_independent
 def test_parse_equations_comment_metadata():
-    """Test inline comments and descriptions for all three equation types: differential, static, and parameter."""
     eqs = parse_string_equations(
     """
     dv/dt = (g_L*(E_L - v) + # leak current
