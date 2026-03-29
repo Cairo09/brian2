@@ -96,6 +96,40 @@ def test_variables():
 
 
 @pytest.mark.codegen_independent
+def test_equation_comment_metadata_on_variables():
+    G = NeuronGroup(
+        1,
+        """
+        dv/dt = (g_L*(E_L-v) + # leak current
+                 g_e*(E_e-v)) / tau : 1 # membrane potential
+        I_syn = g_L*(E_L-v) + # leak component
+                g_e*(E_e-v) : amp # excitatory component
+        v_t : 1 # threshold
+        """,
+    )
+    
+    assert G.equations["v"].description == "membrane potential"
+    assert G.equations["v"].inline_comments == [
+        {"text": "g_L*(E_L-v) +", "comment": "leak current"}
+    ]
+    assert G.variables["v"].description == "membrane potential"
+    assert G.variables["v"].inline_comments == [
+        {"text": "g_L*(E_L-v) +", "comment": "leak current"}
+    ]
+    
+    assert G.equations["I_syn"].description == "excitatory component"
+    assert G.equations["I_syn"].inline_comments == [
+        {"text": "g_L*(E_L-v) +", "comment": "leak component"}
+    ]
+    assert G.variables["I_syn"].description == "excitatory component"
+    assert G.variables["I_syn"].inline_comments == [
+        {"text": "g_L*(E_L-v) +", "comment": "leak component"}
+    ]
+    
+    assert G.variables["v_t"].description == "threshold"
+
+
+@pytest.mark.codegen_independent
 def test_variableview_calculations():
     # Check that you can directly calculate with "variable views"
     G = NeuronGroup(

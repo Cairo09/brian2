@@ -209,6 +209,43 @@ def test_parse_equations():
 
 
 @pytest.mark.codegen_independent
+def test_parse_equations_comment_metadata():
+    eqs = parse_string_equations(
+    """
+    dv/dt = (g_L*(E_L - v) + # leak current
+             g_e*(E_e - v) + # excitatory input
+             g_i*(E_i - v)) / tau : 1 # inhibitory input
+    I_syn = g_e*(E_e - v) + # excitatory component
+            g_i*(E_i - v) : amp # inhibitory component
+    v_t : 1 # threshold
+    """
+)
+
+    assert eqs["v"].expr.code == "(g_L*(E_L - v) + g_e*(E_e - v) + g_i*(E_i - v)) / tau"
+    assert eqs["v"].description == "inhibitory input"
+    assert eqs["v"].inline_comments == [
+    {"text": "g_L*(E_L - v) +", "comment": "leak current"},
+    {"text": "g_e*(E_e - v) +", "comment": "excitatory input"},
+]
+
+    assert eqs["I_syn"].expr.code == "g_e*(E_e - v) + g_i*(E_i - v)"
+    assert eqs["I_syn"].description == "inhibitory component"
+    assert eqs["I_syn"].inline_comments == [
+    {"text": "g_e*(E_e - v) +", "comment": "excitatory component"},
+]
+
+    assert eqs["v_t"].description == "threshold"
+    assert eqs["v_t"].inline_comments == []
+
+
+@pytest.mark.codegen_independent
+def test_parse_equations_parameter_description():
+    eqs = parse_string_equations("v_t : 1 # threshold")
+    assert eqs["v_t"].description == "threshold"
+    assert eqs["v_t"].inline_comments == []
+
+
+@pytest.mark.codegen_independent
 def test_correct_replacements():
     """Test replacing variables via keyword arguments"""
     # replace a variable name with a new name

@@ -139,16 +139,18 @@ class Variable(CacheKey):
     _cache_irrelevant_attributes = {"owner"}
 
     def __init__(
-        self,
-        name,
-        dimensions=DIMENSIONLESS,
-        owner=None,
-        dtype=None,
-        scalar=False,
-        constant=False,
-        read_only=False,
-        dynamic=False,
-        array=False,
+        self, 
+        name, 
+        dimensions=DIMENSIONLESS, 
+        owner=None, 
+        dtype=None, 
+        scalar=False, 
+        constant=False, 
+        read_only=False, 
+        dynamic=False, 
+        array=False, 
+        description=None, 
+        inline_comments=None,
     ):
         assert isinstance(dimensions, Dimension)
 
@@ -184,6 +186,16 @@ class Variable(CacheKey):
 
         #: Whether the variable is an array
         self.array = array
+
+        #: A variable associated description 
+        self.description = description
+
+        #: inline comments associated with this variable 
+        self.inline_comments = (
+            [dict(comment) for comment in inline_comments]
+            if inline_comments is not None
+            else []
+        )
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -474,6 +486,8 @@ class ArrayVariable(Variable):
         read_only=False,
         dynamic=False,
         unique=False,
+        description=None,
+        inline_comments=None,
     ):
         super().__init__(
             dimensions=dimensions,
@@ -485,6 +499,8 @@ class ArrayVariable(Variable):
             read_only=read_only,
             dynamic=dynamic,
             array=True,
+            description=description,
+            inline_comments=inline_comments,
         )
 
         #: Wether all values in this arrays are necessarily unique (only
@@ -712,6 +728,8 @@ class Subexpression(Variable):
         dimensions=DIMENSIONLESS,
         dtype=None,
         scalar=False,
+        description=None,
+        inline_comments=None,
     ):
         super().__init__(
             dimensions=dimensions,
@@ -721,6 +739,8 @@ class Subexpression(Variable):
             scalar=scalar,
             constant=False,
             read_only=True,
+            description=description,
+            inline_comments=inline_comments,
         )
 
         #: The `Device` responsible for memory access
@@ -1707,6 +1727,8 @@ class Variables(Mapping):
         scalar=False,
         unique=False,
         index=None,
+        description=None,
+        inline_comments=None,
     ):
         """
         Add an array (initialized with zeros).
@@ -1756,6 +1778,8 @@ class Variables(Mapping):
             scalar=scalar,
             read_only=read_only,
             unique=unique,
+            description=description,
+            inline_comments=inline_comments,
         )
         self._add_variable(name, var, index)
         # This could be avoided, but we currently need it so that standalone
@@ -1978,7 +2002,7 @@ class Variables(Mapping):
         self._add_variable(name, var)
 
     def add_subexpression(
-        self, name, expr, dimensions=DIMENSIONLESS, dtype=None, scalar=False, index=None
+        self, name, expr, dimensions=DIMENSIONLESS, dtype=None, scalar=False, index=None, description=None, inline_comments=None
     ):
         """
         Add a named subexpression.
@@ -2009,6 +2033,8 @@ class Variables(Mapping):
             dtype=dtype,
             device=self.device,
             scalar=scalar,
+            description=description,
+            inline_comments=inline_comments,
         )
         self._add_variable(name, var, index=index)
 
