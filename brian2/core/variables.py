@@ -139,18 +139,7 @@ class Variable(CacheKey):
     _cache_irrelevant_attributes = {"owner"}
 
     def __init__(
-        self,
-        name,
-        dimensions=DIMENSIONLESS,
-        owner=None,
-        dtype=None,
-        scalar=False,
-        constant=False,
-        read_only=False,
-        dynamic=False,
-        array=False,
-        description=None,
-        inline_comments=None,
+        self, name, dimensions=DIMENSIONLESS, owner=None, dtype=None, scalar=False, constant=False, read_only=False, dynamic=False, array=False, description=None, inline_comments=None,
     ):
         assert isinstance(dimensions, Dimension)
 
