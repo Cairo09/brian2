@@ -139,7 +139,18 @@ class Variable(CacheKey):
     _cache_irrelevant_attributes = {"owner"}
 
     def __init__(
-        self, name, dimensions=DIMENSIONLESS, owner=None, dtype=None, scalar=False, constant=False, read_only=False, dynamic=False, array=False, description=None, inline_comments=None,
+        self, 
+        name, 
+        dimensions=DIMENSIONLESS, 
+        owner=None, 
+        dtype=None, 
+        scalar=False, 
+        constant=False, 
+        read_only=False, 
+        dynamic=False, 
+        array=False, 
+        description=None, 
+        inline_comments=None,
     ):
         assert isinstance(dimensions, Dimension)
 
@@ -1991,15 +2002,7 @@ class Variables(Mapping):
         self._add_variable(name, var)
 
     def add_subexpression(
-        self,
-        name,
-        expr,
-        dimensions=DIMENSIONLESS,
-        dtype=None,
-        scalar=False,
-        index=None,
-        description=None,
-        inline_comments=None,
+        self, name, expr, dimensions=DIMENSIONLESS, dtype=None, scalar=False, index=None, description=None, inline_comments=None
     ):
         """
         Add a named subexpression.

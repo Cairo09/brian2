@@ -443,7 +443,7 @@ def parse_string_equations(eqns):
         flags = list(eq_content.get("flags", []))
 
         equation = SingleEquation(
-            eq_type, identifier, dims, var_type=var_type, expr=expression, flags=flags, description=description, inline_comments=inline_comments,
+            eq_type, identifier, dims, var_type=var_type, expr=expression, flags=flags, description=description, inline_comments=inline_comments
         )
 
         if identifier in equations:
@@ -483,7 +483,7 @@ class SingleEquation(Hashable, CacheKey):
     _cache_irrelevant_attributes = {"update_order"}
 
     def __init__(
-        self, type, varname, dimensions, var_type=FLOAT, expr=None, flags=None, description=None, inline_comments=None,
+        self, type, varname, dimensions, var_type=FLOAT, expr=None, flags=None, description=None, inline_comments=None
     ):
         self.type = type
         self.varname = varname
